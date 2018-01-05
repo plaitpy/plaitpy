@@ -1,0 +1,30 @@
+# an example of a human activity generator for website traffic
+define:
+  seconds_in_hour: 60 * 60
+  seconds_in_day: ${seconds_in_hour} * 24
+  time_offset: ${seconds_in_day}
+
+args:
+  _basetime:
+    lambda: int(time.time() / ${time_offset}) * ${time_offset} - this._delta
+
+  _delta:
+    lambda: ${time_offset}
+
+fields:
+  # the hour of day is based on a mixture of uniform and three gaussian
+  # distributions, representing the morning, lunch and evening peaks
+  _hourofday:
+    mixture:
+      - random: gauss(8, 2) # morning peak
+        weight: 1
+      - random: gauss(12, 1) # lunch peak (one hour)
+        weight: 0.5
+      - random: gauss(20, 2) # night peak
+        weight: 1
+      - random: random() * 24
+        weight: 0.5
+    finalize: value * ${seconds_in_hour}
+
+  time:
+    lambda: this._basetime + this._hourofday

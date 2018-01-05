@@ -1,0 +1,19 @@
+fields:
+  num: 2
+
+  foo:
+    switch:
+      - onlyif: this.num > 1
+        value: "foo"
+
+
+  bar:
+    switch:
+      - onlyif: this.num > 3
+        value: "crazy"
+      - default:
+        value: "bar"
+
+  baz:
+    switch:
+      - onlyif: this.num < 1

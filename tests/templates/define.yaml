@@ -1,0 +1,15 @@
+define:
+  f: str("foo")
+  r: str("bar")
+  z: str("baz")
+  a: 10
+  b: 3
+  c: 17
+
+fields:
+  foo:
+    lambda: |
+      "${f}${r}${z}"
+
+  bar:
+    lambda: ${a} * ${b} * ${c}

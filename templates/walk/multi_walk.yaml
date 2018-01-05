@@ -1,0 +1,16 @@
+fields:
+  _stock1:
+    template: "walk/random_walk.yaml"
+  _stock2:
+    template: "walk/random_walk.yaml"
+  _stock3:
+    template: "walk/random_walk.yaml"
+
+  val1:
+    lambda: this._stock1.value
+
+  val2:
+    lambda: this._stock2.value
+
+  val3:
+    lambda: this._stock2.value

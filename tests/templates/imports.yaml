@@ -1,0 +1,7 @@
+imports:
+  - marshal
+
+
+fields:
+  testfield:
+    lambda: marshal

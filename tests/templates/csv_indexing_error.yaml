@@ -1,0 +1,17 @@
+fields:
+  foo:
+    csv: indexing.csv
+    index: [0, 1]
+    column: 2
+    lookup: >
+      [this.bar, this.baz]
+
+  bar: a
+  baz: b
+
+  boo:
+    csv: indexing.csv
+    index: [0, 1]
+    column: 2
+    lookup: >
+      [this.bar, this.bag]

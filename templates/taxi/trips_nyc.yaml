@@ -1,0 +1,62 @@
+fields:
+  # incrementing ID
+  index:
+    lambda: prev.index + 1
+    initial: 0
+
+  # identifiers for taxi and dispatcher
+  taxi_id:
+    random: max(gauss(10,2) * 10000, 1)
+    cast: int
+  dispatch_id:
+    random: randint(1, 100)
+  # variables
+  traffic:
+    random: random()
+  speed:
+    random: random() * 50 + 10
+
+
+  # timing
+  pickup_time:
+    random: time.time() + (random() * 1000 - random() * 1000)
+    cast: int
+  time_taken:
+    lambda: (this.distance / this.speed) / this.traffic * 600
+  dropoff_time:
+    lambda: this.pickup_time + this.time_taken
+
+  # cost and payment
+  cost_per_mile:
+    random: random() * 2.50 + 3
+  paid:
+    lambda: this.distance * this.cost_per_mile
+
+  # locations
+  pickup:
+    template: address/nyc.yaml
+  dropoff:
+    template: address/nyc.yaml
+
+  _geodistance:
+    template: function/geodistance.yaml
+    args:
+      lat1:
+        lambda: this.pickup.lat
+      lat2:
+        lambda: this.dropoff.lat
+      lng1:
+        lambda: this.pickup.lng
+      lng2:
+        lambda: this.dropoff.lng
+
+  distance:
+    lambda: this._geodistance.distance
+
+mixin:
+  - timestamp/uniform.yaml
+
+hide:
+  - traffic
+  - speed
+  - cost_per_mile

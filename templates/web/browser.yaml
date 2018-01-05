@@ -1,0 +1,68 @@
+# this is an example mixin
+# all of our defines are propagated downwards
+mixin:
+  - timestamp/human_daily_pattern.yaml
+
+define:
+  one_week_in_seconds: 60 * 60 * 24 * 7
+  megabyte: 1024 * 1024 * 1024
+
+fields:
+  # random numbers
+  ping:
+    random: gauss(100, 30)
+  speed:
+    random: randint(1, 5)
+  size:
+    random: max(gauss(100, 1000), 10) + this._large_file
+  _large_file:
+    switch:
+      - onlyif: random.random() > 0.9
+        random: random() * ${megabyte} * 100
+      - default:
+        lambda: 0
+
+  server_gen:
+    random: betavariate(2,5) * 1000
+
+  # modeled value is:
+  # the size of the page times the speed of our modem + 5 times the server gen time + twice the ping (round trip)
+  _load_time:
+    lambda: this.size / (this.speed * 50) + (this.server_gen * 5) + this.ping * 2
+
+  load_time:
+    random: this._load_time * this.slowdown
+
+  # some categoricals
+  host:
+    csv: data/top500.domains.12.17.csv
+    column: 1
+    weight: 2
+    replace:
+      /: ""
+
+  useragent:
+    csv: data/useragent.csv
+    column: 0
+
+  _jitter:
+    random: random() * 0.1
+
+  _slowdown:
+    # these matches are in order of application
+    switch:
+      - onlyif: re.search("Mobile", this.useragent, re.I)
+        lambda: 1.25
+      - onlyif: re.search("Chrome", this.useragent, re.I)
+        lambda: 1.05
+      - onlyif: re.search("Safari", this.useragent, re.I)
+        lambda: 0.95
+      - default:
+        lambda: 1
+  slowdown:
+    lambda: this._slowdown + this._jitter
+
+# hide the "speed" parameter from the model
+exclude:
+  - speed
+  - slowdown

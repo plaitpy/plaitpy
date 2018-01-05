@@ -1,0 +1,8 @@
+fields:
+  foo:
+    value: 1
+    cast: str
+
+  bar:
+    value: "1"
+    cast: int

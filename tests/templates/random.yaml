@@ -1,0 +1,3 @@
+fields:
+  foo:
+    random: gauss(50, 10)

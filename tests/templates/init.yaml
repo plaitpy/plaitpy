@@ -1,0 +1,4 @@
+fields:
+  foo:
+    initial: 0
+    lambda: prev.foo + 1

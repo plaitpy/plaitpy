@@ -1,0 +1,3 @@
+[submodule "vendor/faker"]
+	path = vendor/faker
+	url = https://github.com/stympy/faker

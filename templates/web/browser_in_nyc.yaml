@@ -1,0 +1,10 @@
+fields: []
+mixin:
+  - web/browser.yaml
+
+fields:
+  geoip:
+    template:
+      address/nyc.yaml:
+        override:
+          country: "United Stated"

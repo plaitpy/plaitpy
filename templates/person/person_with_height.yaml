@@ -1,0 +1,26 @@
+mixin:
+  - person/person.yaml
+
+fields:
+  is_minor:
+    onlyif: this.age < 18
+    value: True
+
+  # height is a function of age and gender
+  _base_height:
+    switch:
+      - onlyif: this.gender == "F"
+        random: gauss(60, 5)
+      - onlyif: this.gender == "M"
+        random: gauss(70, 5)
+
+  _age_factor:
+    switch:
+      - onlyif: this.age < 15
+        lambda: 1 - (20 - (this.age + 5)) / 20
+
+      - default:
+        value: 1
+
+  height:
+    lambda: this._base_height * this._age_factor

@@ -1,0 +1,5 @@
+fields:
+  foo:
+    csv: sampling.csv
+    column: 0
+    weight: 1

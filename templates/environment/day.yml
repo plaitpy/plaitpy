@@ -1,0 +1,65 @@
+# simulate a day by ticking forward 60 seconds at a time
+define:
+  # have to be careful, because these get replaced immediately
+  # and are not evaluated on every tick
+  seconds_in_day: 24 * 60 * 60
+  days_in_year: 365.0
+  sunrise_base: 5
+  sunrise_apex: 8
+  sunset_base: 16
+  sunset_apex: 20
+  one_minute: 60
+  tick_size: 1
+  start: time.time()
+
+fields:
+  _tick:
+    lambda: prev._tick + ${tick_size}
+    initial: 0
+
+  _second:
+    lambda: this.time % ${seconds_in_day}
+
+  _day_of_year:
+    lambda: (this.time / (24 * 60 * 60)) % ${days_in_year}
+
+  # state of the year
+  _season_percent:
+    lambda: this._day_of_year / ${days_in_year}
+
+  minute:
+    lambda: (this._second / 60) % 60
+
+  hour:
+    lambda: this._second / (60 * 60)
+
+  time:
+    lambda: $start + ($one_minute * this._tick)
+
+  # sunrise and sunset change over time depending on season or day of year
+  sunrise:
+    lambda: $sunrise_base + this._sunrise_incr
+  sunset:
+    lambda: $sunset_base + this._sunset_incr
+  _sunset_incr:
+    lambda: tween.sin(this._season_percent) * ($sunset_apex - $sunset_base)
+  _sunrise_incr:
+    lambda: tween.sin(this._season_percent) * ($sunrise_apex - $sunrise_base)
+
+  # winter is the start of the year, but we can adjust this
+  is_winter:
+    onlyif: this._season_percent > 0.0 and this._season_percent < 0.25
+  is_spring:
+    onlyif: this._season_percent > 0.25 and this._season_percent < 0.5
+  is_summer:
+    onlyif: this._season_percent > 0.5 and this._season_percent < 0.75
+  is_fall:
+    onlyif: this._season_percent > 0.75 and this._season_percent < 1
+
+  # state of the day variables
+  is_night:
+    onlyif: this.hour > this.sunset or this.hour < this.sunrise
+  is_day:
+    onlyif: not this.is_night
+  is_noon:
+    onlyif: this.hour == 12

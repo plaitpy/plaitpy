@@ -1,0 +1,24 @@
+
+fields:
+  status:
+    lambda: random.choice([200, 300, 403, 404, 503])
+  host:
+    csv: data/top500.domains.12.17.csv
+    column: 1
+    weight: 2
+    replace:
+      /: ""
+  ping:
+    random: gauss(60, 20)
+  weight: 
+    lambda: random.choice([1,10,100])
+
+mixin:
+    - timestamp/uniform.yaml
+
+#    record["status"] = str(random.choice(STATII))
+#    record["host"] = rand_host
+#    record["ping"] = abs(random.gauss(60, 20))
+#    record["weight"] = random.choice([1, 10, 100])
+#    time_allowance = 60 * 60 * 24 * 7 * 4 # 1 month?
+#    record["time"] = int(time.time()) + random.randint(-time_allowance, time_allowance)

@@ -1,0 +1,36 @@
+# this template represents a "fake" taxi trip in NYC model
+define:
+  R: 6373.0
+
+args:
+  lat1: 0
+  lat2: 0
+  lng1: 0
+  lng2: 0
+
+fields:
+
+  distance:
+    lambda: this._distance_c * ${R}
+
+  _lat1:
+    lambda: radians(this.lat1)
+  _lat2:
+    lambda: radians(this.lat2)
+  _lng1:
+    lambda: radians(this.lng1)
+  _lng2:
+    lambda: radians(this.lng2)
+
+  # distance calculation using haversine formula:
+  # https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude
+  _dlat:
+    lambda: this._lat1 - this._lat2
+  _dlon:
+    lambda: this._lng1 - this._lng2
+
+  _distance_a:
+    lambda: sin(this._dlat / 2)**2 + cos(this._lat1) * cos(this._lat2) * sin(this._dlon / 2)**2
+  _distance_c:
+    lambda: 2 * atan2(sqrt(this._distance_a), sqrt(1 - this._distance_a))
+

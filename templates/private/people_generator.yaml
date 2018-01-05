@@ -1,0 +1,9 @@
+fields:
+  session_id:
+    random: randint(0, 1000000)
+  company: "#{company.name}"
+  city: "#{address.city}"
+  state: "#{address.state}"
+  country: "#{address.country}"
+  name: "#{name.name}"
+

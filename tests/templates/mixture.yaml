@@ -1,0 +1,9 @@
+fields:
+  foo:
+    mixture:
+      - value: 1
+        weight: 1
+      - value: 2
+        weight: 1
+      - value: 3
+        weight: 5

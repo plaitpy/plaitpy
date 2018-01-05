@@ -1,0 +1,75 @@
+define:
+  minute: 60 * 60
+
+fields:
+  _goto_new_site:
+    onlyif: prev._pages_left <= 0
+
+  _pages_left:
+    # weibull distribution
+    initial: 0
+    switch:
+      - onlyif: this.site_category.search
+        lambda: -1
+      - onlyif: not this._goto_new_site
+        lambda: prev._pages_left - 1
+      - onlyif: this._goto_new_site
+        random: min(weibullvariate(1, 0.5) * 10, 1000)
+      - default:
+        lambda: 0
+
+
+  site_category:
+    template: web/site_category.yaml
+    args:
+      site:
+        lambda: this.current_site
+    hide:
+      - site
+
+  visit_duration:
+    switch:
+      - onlyif: this.site_category.video
+        random: min(weibullvariate(1, 0.5) * 10, 120 * ${minute})
+      - onlyif: this.site_category.search
+        random: random() * 4 + 1
+      - default:
+        random: min(weibullvariate(1, 0.5) * 10, 30 * ${minute})
+
+  page_visit:
+    initial: 0
+    switch:
+      - onlyif: this._goto_new_site
+        lambda: 0
+      - onlyif: not this._goto_new_site
+        lambda: prev.page_visit + 1
+
+  current_site:
+    switch:
+      - onlyif: this._goto_new_site
+        # some categoricals
+        csv: data/top500.domains.12.17.csv
+        column: 1
+        weight: 2
+        replace:
+          /: ""
+
+      - default:
+        lambda: prev.current_site
+
+  _timestamp:
+    onlyif: this._goto_new_site
+    template: timestamp/human_daily_pattern.yaml
+
+  timestamp:
+    initial:
+      lambda: time.time()
+    switch:
+      - onlyif: this._timestamp
+        lambda: this._timestamp.time
+      - default:
+        lambda: prev.timestamp + prev.visit_duration
+
+
+hide:
+  - visit_duration

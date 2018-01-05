@@ -1,0 +1,16 @@
+args:
+  site: nonexistentsite.com
+
+fields:
+  search:
+    onlyif: re.search("(google|goo\.gl|bing|yahoo|duckduckgo)", this.site, re.I)
+
+  video:
+    onlyif: re.search("(youtube|vimeo)", this.site, re.I)
+
+  social:
+    onlyif: re.search("(reddit|facebook)", this.site, re.I)
+
+  unknown:
+    onlyif: not any([this.search, this.video, this.social])
+

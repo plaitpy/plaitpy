@@ -1,0 +1,17 @@
+define:
+  seconds_in_day: 60 * 60 * 24
+  seconds_in_week: ${seconds_in_day} * 7
+  seconds_in_month: ${seconds_in_week} * 4
+  time_offset: ${seconds_in_month}
+
+mixin:
+  - timestamp/human_weekly_pattern.yaml
+
+fields:
+  # the week of the month is uniformly distributed
+  _weekofmonth:
+    random: randint(0, 4)
+    finalize: value * ${seconds_in_week}
+
+  time:
+    lambda: this._basetime + this._hourofday + this._dayofweek + this._weekofmonth

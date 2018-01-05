@@ -1,0 +1,18 @@
+# this is a simple random walk template
+
+args:
+  timestamp:
+    lambda: time.time() + (this.index * 60)
+
+fields:
+  value:
+    random: prev.value + random() - 0.5
+    initial: 0
+
+  index:
+    lambda: prev.index + 1
+    initial: 0
+
+
+hide:
+  - index

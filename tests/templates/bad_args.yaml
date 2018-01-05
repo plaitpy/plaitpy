@@ -1,0 +1,9 @@
+# example of nesting templates
+fields:
+  nested:
+    template: subargs.yaml
+    args:
+      back: baz
+      abc: xyz
+
+

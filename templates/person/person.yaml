@@ -1,0 +1,19 @@
+# a person generator that generates heights based on gender
+fields:
+  age:
+    random: gauss(25, 5)
+    finalize: max(10, value)
+
+  gender:
+    mixture:
+      - value: M
+      - value: F
+
+  name: "#{name.name}"
+  address:
+    template: address/usa.yaml
+
+  phone:
+    template: device/phone.yaml
+    # must be at least 13 to have a phone
+    onlyif: this.age > 13

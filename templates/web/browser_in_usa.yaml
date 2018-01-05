@@ -1,0 +1,9 @@
+mixin:
+  - web/browser.yaml
+
+fields:
+  geoip:
+    template:
+      address/usa.yaml:
+        override:
+          country: "United Stated"

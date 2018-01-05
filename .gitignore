@@ -1,0 +1,13 @@
+*.pyc
+.*.sw?
+
+*/private/*
+scripts/gen_data.sh
+tmp/
+dist
+.git*
+MANIFEST
+NOTES
+TODO
+output
+restats

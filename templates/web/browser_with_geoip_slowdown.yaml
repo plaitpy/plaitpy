@@ -1,0 +1,37 @@
+mixin:
+  - web/browser.yaml
+
+fields:
+  geoip:
+    template:
+      address/usa.yaml:
+        override:
+          country: "United Stated"
+
+  _geo_distance:
+    template: function/geodistance.yaml
+    args:
+      lat1:
+        lambda: this.geoip.lat
+        cast: float
+      lng1:
+        lambda: this.geoip.lng
+        cast: float
+      lat2:
+        lambda: 37.68
+        cast: float
+      lng2:
+        lambda: -97.34
+        cast: float
+
+  _geo_slowdown:
+    lambda: this._geo_distance.distance / 2000.0
+
+  geodistance:
+    lambda: this._geo_distance.distance
+
+  # our slowdown is now related to the distance from our single datacenter
+  # in wichita kansas
+  slowdown:
+    lambda: this._geo_slowdown + this._slowdown + this._jitter
+

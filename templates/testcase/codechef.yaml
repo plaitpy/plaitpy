@@ -1,0 +1,21 @@
+# to generate a test file that has T test cases,
+# each test case has n,k and an array of size n
+# T=100; echo $T; plait.py templates/testcase/codechef.yaml --num $T
+
+define:
+  N: int(100)
+  K: int(100)
+
+fields:
+  n:
+    random: randint(0, ${N})
+  k:
+    random: randint(0, ${K})
+  arr:
+    random: |
+      [ randint(0, this.k) for _ in range(this.n) ]
+
+
+printer: |
+  print(this.n, this.k)
+  print(*this.arr, sep=" ")

@@ -1,0 +1,39 @@
+fields:
+  country: "usa"
+  street: "#{address.street_address}"
+  state: "NY"
+  city: "New York"
+  _region:
+    csv: data/New_York_City_Population_By_Neighborhood_Tabulation_Areas.csv
+    column: 4
+    weight: 5
+  zipcode:
+    csv: data/free-zipcode-database-Primary.csv
+    index: [2, 3]
+    column: 0
+    lookup: >
+      [this._zipregion.upper(), this.state.upper()]
+  lat:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 5
+    cast: float
+    depends: zipcode
+  lng:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 6
+    cast: float
+    depends: zipcode
+  region:
+    lambda: this._region.title()
+  location_id:
+    csv: data/New_York_City_Population_By_Neighborhood_Tabulation_Areas.csv
+    column: 3
+  _zipregion:
+    csv: data/New_York_City_Population_By_Neighborhood_Tabulation_Areas.csv
+    column: 0
+    # depends is explicit because of the CSV join we do. we want to make
+    # sure _region gets populated first (because it has the weight column for this CSV)
+    depends: [ _region ]
+    replace:
+      Manhattan: New York
+      Queens: Jamaica

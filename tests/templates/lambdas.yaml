@@ -1,0 +1,14 @@
+fields:
+
+  foo:
+    lambda: >
+      "foo" + this._bar + this._baz
+
+  _bar: bar
+  _baz: baz
+
+  sum:
+    lambda: this.left + this.right
+
+  left: 20
+  right: 80

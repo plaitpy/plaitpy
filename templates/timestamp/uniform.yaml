@@ -1,0 +1,13 @@
+define:
+  now: time.time()
+  max_offset: 60 * 1000
+
+fields:
+  _offset:
+    random: (random() * $max_offset) - ($max_offset / 2)
+
+  time:
+    lambda: $now + this._offset
+
+hide:
+  - offset

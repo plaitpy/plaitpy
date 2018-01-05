@@ -1,0 +1,26 @@
+define:
+  seconds_in_day: 60 * 60 * 24
+  seconds_in_week: ${seconds_in_day} * 7
+  time_offset: ${seconds_in_week}
+  weekdays: 5 / 7.0
+  weekends: 2 / 7.0
+  weekends_weight: 1.5 # 1.0 = weighted same as weekday
+
+mixin:
+  - timestamp/human_daily_pattern.yaml
+
+fields:
+
+  # day of week is a proportional mixture of weekends and weeknights
+  # we can change the values to elevate or damp weekend activity here
+  _dayofweek:
+    mixture:
+      - random: randint(1, 2)
+        weight: ${weekends} * ${weekends_weight}
+      - random: randint(3, 7)
+        weight: ${weekdays}
+    finalize: value * ${seconds_in_day}
+
+
+  time:
+    lambda: this._basetime + this._hourofday + this._dayofweek

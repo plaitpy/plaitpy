@@ -1,0 +1,16 @@
+# an example of aligning the sub templates with a parent value using yaml aliases
+# (&stock_obj is making the alias, *stock_obj refers to it)
+# also shows how to use the args: feature
+
+fields:
+  timestamp:
+    template: "timestamp/uniform.yaml"
+
+  stock1:
+    &stock_obj
+    template: "walk/random_walk.yaml"
+    args:
+      timestamp:
+        lambda: this.timestamp
+  stock2: *stock_obj
+  stock3: *stock_obj

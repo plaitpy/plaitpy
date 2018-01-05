@@ -1,0 +1,13 @@
+fields:
+  foo:
+    csv: multiples.csv
+    cast: int
+    column: 0
+  bar: 
+    csv: multiples.csv
+    cast: int
+    column: 1
+  baz:
+    csv: multiples.csv
+    cast: int
+    column: 2

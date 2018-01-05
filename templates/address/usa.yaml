@@ -1,0 +1,27 @@
+fields:
+  country: "usa"
+  street: "#{address.street_address}"
+  _city:
+    csv: data/cities.csv
+    column: 1
+    weight: 3
+  city:
+    lambda: this._city.title()
+  zipcode:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 0
+    index: 2
+    lookup: this._city.upper()
+    depends: _city
+  state:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 3
+    depends: zipcode
+  lat:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 5
+    depends: zipcode
+  lng:
+    csv: data/free-zipcode-database-Primary.csv
+    column: 6
+    depends: zipcode

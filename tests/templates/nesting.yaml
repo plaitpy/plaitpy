@@ -1,0 +1,4 @@
+# example of nesting templates
+fields:
+  nested:
+    template: mixins.yaml

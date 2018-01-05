@@ -1,0 +1,34 @@
+fields:
+  ip:
+    # from https://stackoverflow.com/questions/21014618/python-randomly-generated-ip-address-of-the-string
+    lambda: '".".join(map(str, (random.randint(0, 255) for _ in range(4))))'
+
+  # geoip look for user IP
+  _geoip:
+    lambda: geoip.geolite2.lookup(this.ip)
+
+  lng:
+    onlyif: this._geoip and this._geoip.location
+    lambda: this._geoip.location[0]
+
+  lat:
+    onlyif: this._geoip and this._geoip.location
+    lambda: this._geoip.location[1]
+
+  country:
+    onlyif: this._geoip
+    lambda: this._geoip.country
+
+exclude:
+  - speed
+  - geoip
+
+imports:
+  - geoip
+
+requirements:
+  - python-geoip
+  - python-geoip-geolite2
+
+mixin:
+  - web/browser.yaml
