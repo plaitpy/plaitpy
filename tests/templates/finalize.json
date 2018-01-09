@@ -1,0 +1,9 @@
+{
+  "fields": {
+    "foo": {
+      "lambda": 10,
+      "finalize": "value * 10"
+    }
+  }
+}
+

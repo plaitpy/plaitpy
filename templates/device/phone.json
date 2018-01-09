@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "number": "#{phone_number.formats}",
+    "os": {
+      "mixture": [
+        {"value": "iOS"," weight": 5},
+        {"value": "Android"," weight": 9}
+      ]
+    }
+  }
+}

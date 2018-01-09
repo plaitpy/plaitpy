@@ -209,6 +209,18 @@ class TestTemplateFields(unittest.TestCase):
 
         self.assertEqual(r.foo, 100)
 
+    def test_field_finalize_json(self):
+        t = fields.Template("tests/templates/finalize.json")
+        r = t.gen_record()
+
+        self.assertEqual(r.foo, 100)
+
+    def test_field_include_json(self):
+        t = fields.Template("tests/templates/finalize_wrapper.json")
+        r = t.gen_record()
+
+        self.assertEqual(r.foo, 100)
+
     # test field errors
     def test_exit_on_error(self):
         pass

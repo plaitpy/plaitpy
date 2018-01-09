@@ -183,7 +183,7 @@ class Template(object):
 
 
     def error(self, *args):
-        if DEBUG or not self.TEST_MODE:
+        if DEBUG or not TEST_MODE:
             print("%s" % (" ".join(map(str, args))), file=sys.stderr)
 
     def debug(self, *args):
@@ -224,8 +224,20 @@ class Template(object):
             return Template("%s" % name, depth=self.depth+1)
 
     def load_template(self, template):
-        with readfile(template) as f:
-            data = f.read()
+        if template.endswith(".json"):
+            with readfile(template) as f:
+                try:
+                    data = yaml.safe_dump(json.load(f), default_flow_style=False)
+                except Exception as e:
+                    self.error("Couldn't parse template %s" % (template), e)
+                    raise(e)
+
+        elif template.endswith(".yaml") or template.endswith(".yml"):
+            with readfile(template) as f:
+                data = f.read()
+        else:
+            self.error("Unknown template type: %s" % template)
+
 
         self.load_template_from_data(template, data)
 
