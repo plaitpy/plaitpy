@@ -149,3 +149,6 @@ into modeling processes that can interact with each other is needed.
 
 If you have ideas on features to add, open an issue - Feedback is appreciated!
 
+### License
+
+[MIT](https://github.com/plaitpy/plaitpy/blob/master/LICENSE.txt)
