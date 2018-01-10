@@ -21,7 +21,7 @@ if "LOCALE" in ENV:
 DEFAULT_LOCALE = "en"
 
 OPENED_DATA = {}
-CONFIG_DIR = os.path.expanduser("~/.config/plait.py/")
+CONFIG_DIR = os.path.expanduser("~/.cache/plait.py/")
 DIRTY_CACHE = False
 
 SCRIPT_PATH = os.path.realpath(__file__)
