@@ -1,5 +1,5 @@
-PYTHON_BIN="python"
-
+[ -z "${PYTHON_BIN}" ] && PYTHON_BIN="python"
+echo "TESTING WITH ${PYTHON_BIN}"
 
 function run_yaml() {
   ${PYTHON_BIN} main.py ${1} --num 10 --csv > /dev/null 2>&1
