@@ -92,3 +92,47 @@
           - random: gauss(20, 2)
           - random: randint(0, 24)
             weight: 0.5 # not so important
+
+### using CSV files
+
+#### sampling from CSV with weight fields
+
+    # if we have a CSV that is:
+    # [useragent, population_count, browser_family, browser_major, browser_minor]
+    # we can do the following, to get proportional sampling
+    fields:
+      useragent:
+        csv: useragents.csv
+        column: 1
+        weight: 2 # the weight column
+
+      # if two CSV fields are specified using the same file, their values will be from the same row in the CSV
+      # in this example, browser_family will be from the same row that useragent comes from
+      browser_family:
+        csv: useragents.csv
+        column: 3
+        depends: useragent
+
+#### joining to a CSV using indeces
+
+    # if we have two CSV that are:
+    # zipcode_pop.csv: [ zipcode, population ]
+    # cities.csv: [ state, city, zip code ]
+    # we can join them together:
+    fields:
+      zipcode:
+        csv: zipcode_pop.csv
+        column: 1
+        weight: 2
+
+      state:
+        csv: cities.csv
+        column: 1
+        index: 3
+        lookup: this.zipcode
+
+      city:
+        csv: cities.csv
+        column: 2
+        index: 3
+        lookup: this.zipcode

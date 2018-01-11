@@ -21,21 +21,21 @@ if "LOCALE" in ENV:
 DEFAULT_LOCALE = "en"
 
 OPENED_DATA = {}
-CONFIG_DIR = os.path.expanduser("~/.cache/plait.py/")
+CACHE_DIR = os.path.expanduser("~/.cache/plait.py/")
 DIRTY_CACHE = False
 
 SCRIPT_PATH = os.path.realpath(__file__)
 FAKER_DIR = os.path.realpath(os.path.join(__file__, "..", "..", "vendor/faker/"))
 LOCALE_DIR = "lib/locales/"
 
-if not os.path.exists(CONFIG_DIR):
+if not os.path.exists(CACHE_DIR):
     try:
-        os.makedirs(CONFIG_DIR)
+        os.makedirs(CACHE_DIR)
     except:
-        debug("Can't create cache for fakerb data in", CONFIG_DIR)
+        debug("Can't create cache for fakerb data in", CACHE_DIR)
         pass
 
-FAKERB_PICKLE = "%s/fakerb.pickle" % CONFIG_DIR
+FAKERB_PICKLE = "%s/fakerb.pickle" % CACHE_DIR
 
 def setup_data(filename, doc, data):
     global DIRTY_CACHE
