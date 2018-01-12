@@ -136,3 +136,54 @@
         column: 2
         index: 3
         lookup: this.zipcode
+
+### using custom imports
+
+    fields:
+      _geoip:
+        lambda: geoip.geolite2.lookup(this.ip)
+
+      ip:
+        template: web/ip.yaml
+
+      country:
+        onlyif: this._geoip and this._geoip.country
+        lambda: this._geoip.country
+
+    imports:
+      - geoip
+
+    requirements:
+      - python-geoip
+      - python-geoip-geolite2
+
+If a template fails an import, the **requirements** field will be printed to
+the console, letting the caller know which packages might be required for the
+template to work.
+
+
+## using a custom printer
+
+    define:
+      N: int(100)
+      K: int(100)
+
+    fields:
+      n:
+        random: randint(0, ${N})
+      k:
+        random: randint(0, ${K})
+      arr:
+        random: |
+          [ randint(0, this.k) for _ in range(this.n) ]
+
+
+    printer: |
+      print(this.n, this.k)
+      print(*this.arr, sep=" ")
+
+notice that the `|` character in yaml is a multi-line comment separated by
+newlines. this is really useful for defining multi-line functions. if the `>`
+character was used instead, the **printer:** would not work, because `>` is a
+comment separated by spaces in YAML and the resulting string would be invalid
+code.

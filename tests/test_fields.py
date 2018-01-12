@@ -223,7 +223,9 @@ class TestTemplateFields(unittest.TestCase):
 
     # test field errors
     def test_exit_on_error(self):
-        pass
+        t = fields.Template("tests/templates/bad_args.yaml")
+        with self.assertRaises(SystemExit) as context:
+            r = t.gen_record()
 
     def test_track_field_errors(self):
         pass

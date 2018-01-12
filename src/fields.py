@@ -1051,14 +1051,18 @@ class Template(object):
 
 
         for _ in range(num_records // chunk_size):
-            for r in self.gen_records(chunk_size):
+            for r in self.gen_records(chunk_size, print_timing=False):
                 print_record(r)
 
         if num_records % chunk_size != 0:
-            for r in self.gen_records(num_records % chunk_size):
+            for r in self.gen_records(num_records % chunk_size, print_timing=False):
                 print_record(r)
 
-    def gen_records(self, num_records):
+        self.print_dropped()
+        if DEBUG_GEN_TIMINGS:
+            self.print_timings()
+
+    def gen_records(self, num_records, print_timing=True):
         ret = []
         try:
             for i in range(num_records):
@@ -1076,8 +1080,9 @@ class Template(object):
         except Exception as e:
             debug(e)
         finally:
-            self.print_dropped()
-            if DEBUG_GEN_TIMINGS:
-                self.print_timings()
+            if print_timing:
+                self.print_dropped()
+                if DEBUG_GEN_TIMINGS:
+                    self.print_timings()
 
         return ret

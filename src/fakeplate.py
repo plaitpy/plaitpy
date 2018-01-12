@@ -17,19 +17,24 @@ def setup_args():
     parser.add_argument('template', metavar='template.yml', type=str, nargs="?",
                         help='template to generate data from')
 
-    parser.add_argument('--csv', dest='csv', default=False, action="store_true",
-                        help='encode records as CSV')
-    parser.add_argument('--json', dest='json', default=True, action="store_true",
-                        help='encode records as JSON')
-
     parser.add_argument('--dir', dest='dir', type=str, default=".",
                         help='parent dir for templates and data files')
     parser.add_argument( '--num', dest='num_records', type=int, default=10000,
                         help='number of records to generate')
 
+    parser.add_argument('--csv', dest='csv', default=False, action="store_true",
+                        help='encode records as CSV')
+    parser.add_argument('--json', dest='json', default=True, action="store_true",
+                        help='encode records as JSON')
+
     # look up data from faker.rb
     parser.add_argument('-l', '--list', dest='list', help='list faker namespaces', action="store_true")
     parser.add_argument('-ll',  '--lookup', dest='lookup', type=str, help='faker namespace to lookup', nargs='?')
+    parser.add_argument('--debug', dest='debug', action="store_true", default=False,
+                        help='Turn on debugging output for plait.py')
+    parser.add_argument('--exit-on-error', dest='exit_error', action="store_true", default=False,
+                        help='Exit loudly on error')
+
     args = parser.parse_args()
 
     return args, parser
@@ -45,6 +50,15 @@ def main():
     elif args.json:
         fields.JSON = True
         fields.CSV = False
+
+    if args.exit_error:
+        args.debug = True
+        fields.EXIT_ON_ERROR = True
+
+    if args.debug:
+        fields.DEBUG = True
+        helpers.DEBUG = True
+
 
 
     if args.lookup:

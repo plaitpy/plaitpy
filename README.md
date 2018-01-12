@@ -142,6 +142,10 @@ plait.py also simplifies looking up faker fields:
 * see docs/EXAMPLES.md
 * also see templates/ dir
 
+### troubleshooting
+
+* see docs/TROUBLESHOOTING.md
+
 ### future direction
 
 Currently, plait.py models independent markov processes - future investigation
