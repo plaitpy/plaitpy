@@ -1,6 +1,6 @@
 ## Examples
 
-#### random walk
+### random walk
 
     fields:
       value:
@@ -162,7 +162,7 @@ the console, letting the caller know which packages might be required for the
 template to work.
 
 
-## using a custom printer
+### using a custom printer
 
     define:
       N: int(100)

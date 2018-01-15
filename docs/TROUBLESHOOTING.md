@@ -15,7 +15,7 @@ for each static variable is.
 ### template returns None
 
 If a template is not returning any results (f.e. [this
-issue](https://github.com/plaitpy/plaitpy/issues/3), turn on debugging
+issue](https://github.com/plaitpy/plaitpy/issues/3)), turn on debugging
 to get more details. If that doesn't work, open an issue.
 
 ## misc

@@ -29,6 +29,7 @@ imports:
 requirements:
   - python-geoip
   - python-geoip-geolite2
+  - python-geoip-python3
 
 mixin:
   - web/browser.yaml
