@@ -1,5 +1,5 @@
 from . fields import Template
-from . import fakeplate as cli
+from . import cli
 from . version import VERSION
 from .  ecosystem import Ecosystem
 
