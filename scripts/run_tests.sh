@@ -2,12 +2,12 @@
 echo "TESTING WITH ${PYTHON_BIN}"
 
 function run_yaml() {
-  ${PYTHON_BIN} main.py ${1} --num 10 --csv > /dev/null 2>&1
+  ${PYTHON_BIN} main.py ${1} --num 10 --csv --exit-on-error > /dev/null 2>&1
   if (( $? == 0 )); then
     echo "PASS: ${1}"
   else
     echo "${1} FAILED WITH ${?}!"
-    ${PYTHON_BIN} main.py ${1} --num 10 --csv > /dev/null
+    ${PYTHON_BIN} main.py ${1} --num 10 --csv --exit-on-error > /dev/null
     exit 1
   fi
 
