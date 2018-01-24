@@ -41,6 +41,7 @@ field can be of multiple types, including:
 * **switch**: specifies that this field is a switch field (similar to if / else if clauses)
 * **csv**: specifies that this field is generated via sampling from a CSV file
 * **lambda**: specifies that this field is generated via custom lambda function
+* **effect**: specifies that this field is an effect field with sideeffects
 * **mixture**: specifies that this field is a mixture field (similar to a probabilistic if clause)
 * **random**: specifies that this field should be generated from random module
 * **template**: specifies that this field is generated from another template
@@ -55,6 +56,8 @@ params:
   * cast: the type to cast this field to, "int", "float", "str", etc
   * initial: the initial value for this field (if it is self-referential)
   * finalize: a final lambda expression to be run on this field (a finalizer)
+  * suppress: suppress errors from this field (if its known to throw any)
+  * onlyif: only add this field if it matches the supplied expr
 
 ##  fields API
 

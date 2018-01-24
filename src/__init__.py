@@ -1,6 +1,9 @@
-from . fields import Template
+from . template import Template
 from . import cli
 from . version import VERSION
-from .  ecosystem import Ecosystem
+from . import helpers
 
-__all__ = [ "Template", "cli" ]
+import sys
+sys.modules['plaitpy'] = sys.modules[__name__]
+
+__all__ = [ "Template", "cli", "helpers" ]

@@ -1,0 +1,7 @@
+fields:
+  foo:
+    lambda: 100
+
+
+printer: |
+  print("foo: %s" % this.foo)

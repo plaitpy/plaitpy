@@ -1,0 +1,7 @@
+setup: |
+  globals.foo = 100
+
+fields:
+  foo:
+    lambda: foo
+

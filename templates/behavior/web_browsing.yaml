@@ -43,6 +43,8 @@ fields:
         lambda: 0
       - onlyif: not this._goto_new_site
         lambda: prev.page_visit + 1
+      - default:
+        lambda: 0
 
   current_site:
     switch:

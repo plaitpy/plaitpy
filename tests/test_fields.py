@@ -6,12 +6,23 @@ import os
 
 # i hate the path dance
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
-from src import fields
+from src import template
 from src import helpers
 
 helpers.TRACEBACK = False
-fields.TEST_MODE = True
-fields.EXIT_ON_ERROR = True
+template.TEST_MODE = True
+template.EXIT_ON_ERROR = True
+
+from contextlib import contextmanager
+
+@contextmanager
+def stdout_redirector(stream):
+    old_stdout = sys.stdout
+    sys.stdout = stream
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
 
 class TestTemplateFields(unittest.TestCase):
@@ -24,20 +35,20 @@ class TestTemplateFields(unittest.TestCase):
 
     def test_imports(self):
         import marshal
-        t = fields.Template("tests/templates/imports.yaml")
+        t = template.Template("tests/templates/imports.yaml")
         r = t.gen_record()
         self.assertEqual(r.testfield, marshal)
         self.assert_no_errors(t)
 
     def test_mixins(self):
-        t = fields.Template("tests/templates/mixins.yaml")
+        t = template.Template("tests/templates/mixins.yaml")
         r = t.gen_record()
         self.assertEqual(r.foo, "bar")
         self.assertEqual(r.abc, "def")
         self.assert_no_errors(t)
 
     def test_defines(self):
-        t = fields.Template("tests/templates/define.yaml")
+        t = template.Template("tests/templates/define.yaml")
         r = t.gen_record()
         self.assertEqual(r.foo, "foobarbaz")
         self.assertEqual(r.bar, 510)
@@ -45,21 +56,21 @@ class TestTemplateFields(unittest.TestCase):
 
     # field types
     def test_mixin_overrides(self):
-        t = fields.Template("tests/templates/mixins_override.yaml")
+        t = template.Template("tests/templates/mixins_override.yaml")
         r = t.gen_record()
         self.assertEqual(r.foo, "baz")
         self.assertEqual(r.abc, "def")
         self.assert_no_errors(t)
 
     def test_lambda_fields(self):
-        t = fields.Template("tests/templates/lambdas.yaml")
+        t = template.Template("tests/templates/lambdas.yaml")
         r = t.gen_record()
         self.assertEqual(r.foo, "foobarbaz")
         self.assertEqual(r.sum, 100)
         self.assert_no_errors(t)
 
     def test_csv_sampling(self):
-        t = fields.Template("tests/templates/csv_sampling.yaml")
+        t = template.Template("tests/templates/csv_sampling.yaml")
         rs = t.gen_records(100)
         counts = { "foo" : 0, "bar" : 0, "baz" : 0 }
         for r in rs:
@@ -70,22 +81,21 @@ class TestTemplateFields(unittest.TestCase):
         self.assertEqual(counts["bar"], 0)
 
     def test_csv_resampling(self):
-        t = fields.Template("tests/templates/resample.yaml")
+        t = template.Template("tests/templates/resample.yaml")
         r = t.gen_record()
         self.assertEqual(r.foo * 2, r.bar)
         self.assertEqual(r.foo * 3, r.baz)
 
 
     def test_csv_indexing_error(self):
-        t = fields.Template("tests/templates/csv_indexing_error.yaml")
+        template.EXIT_ON_ERROR = False
+        t = template.Template("tests/templates/csv_indexing_error.yaml")
         with self.assertRaises(SystemExit) as context:
             r = t.gen_record()
 
-        fields.EXIT_ON_ERROR = False
 
-        t = fields.Template("tests/templates/csv_indexing_error.yaml")
+        t = template.Template("tests/templates/csv_no_indexing_error.yaml")
         r = t.gen_record()
-        fields.EXIT_ON_ERROR = True
 
         self.assertEqual(r.foo, "foobarbaz")
         # this template has a bad lookup in it,
@@ -93,7 +103,7 @@ class TestTemplateFields(unittest.TestCase):
         self.assert_num_errors(t, 1)
 
     def test_csv_indexing(self):
-        t = fields.Template("tests/templates/csv_indexing.yaml")
+        t = template.Template("tests/templates/csv_indexing.yaml")
         r = t.gen_record()
 
         self.assertEqual(r.foo, "foobarbaz")
@@ -102,7 +112,7 @@ class TestTemplateFields(unittest.TestCase):
         self.assert_no_errors(t)
 
     def test_switch_fields(self):
-        t = fields.Template("tests/templates/switch.yaml")
+        t = template.Template("tests/templates/switch.yaml")
         r = t.gen_record()
 
         self.assertEqual(r.foo, "foo")
@@ -110,7 +120,7 @@ class TestTemplateFields(unittest.TestCase):
         self.assertEqual(r.baz, None)
 
     def test_mixture_fields(self):
-        t = fields.Template("tests/templates/mixture.yaml")
+        t = template.Template("tests/templates/mixture.yaml")
         rs = t.gen_records(1000)
 
         counts = { 1 :0, 2: 0, 3: 0 }
@@ -125,14 +135,14 @@ class TestTemplateFields(unittest.TestCase):
 
 
     def test_template_fields(self):
-        t = fields.Template("tests/templates/nesting.yaml")
+        t = template.Template("tests/templates/nesting.yaml")
         r = t.gen_record()
         self.assertEqual(r.nested.foo, "bar")
         self.assertEqual(r.nested.abc, "def")
         self.assert_no_errors(t)
 
     def test_template_bad_args(self):
-        t = fields.Template("tests/templates/bad_args.yaml")
+        t = template.Template("tests/templates/bad_args.yaml")
 
         r = None
         with self.assertRaises(SystemExit) as context:
@@ -140,14 +150,14 @@ class TestTemplateFields(unittest.TestCase):
 
 
     def test_template_args(self):
-        t = fields.Template("tests/templates/args.yaml")
+        t = template.Template("tests/templates/args.yaml")
         r = t.gen_record()
         self.assertEqual(r.nested.foo, "baz")
         self.assertEqual(r.nested.abc, "xyz")
         self.assert_no_errors(t)
 
     def test_faker_interpolation(self):
-        t = fields.Template("tests/templates/faker.yaml")
+        t = template.Template("tests/templates/faker.yaml")
         self.assertEqual(t.field_definitions["foo"], "#{name.name}")
 
         r = t.gen_record()
@@ -155,7 +165,7 @@ class TestTemplateFields(unittest.TestCase):
         self.assert_no_errors(t)
 
     def test_hidden_fields(self):
-        t = fields.Template("tests/templates/hidden.yaml")
+        t = template.Template("tests/templates/hidden.yaml")
         self.assertEqual(t.field_definitions["_foo"], "bar")
         self.assertEqual(t.field_definitions["vis"], "baz")
         r = t.gen_record()
@@ -164,7 +174,7 @@ class TestTemplateFields(unittest.TestCase):
         self.assertEqual(r.vis, "baz")
 
     def test_random_fields(self):
-        t = fields.Template("tests/templates/random.yaml")
+        t = template.Template("tests/templates/random.yaml")
 
         rs = t.gen_records(1000)
         for r in rs:
@@ -176,7 +186,7 @@ class TestTemplateFields(unittest.TestCase):
 
     def test_prev_record(self):
         for _ in range(3):
-            t = fields.Template("tests/templates/init.yaml")
+            t = template.Template("tests/templates/init.yaml")
 
             r = t.gen_record()
             self.assertEqual(r.foo, 1)
@@ -187,7 +197,7 @@ class TestTemplateFields(unittest.TestCase):
 
     # field operations
     def test_field_cast(self):
-        t = fields.Template("tests/templates/casts.yaml")
+        t = template.Template("tests/templates/casts.yaml")
         r = t.gen_record()
 
         self.assertEqual(type(r.foo), str)
@@ -195,7 +205,7 @@ class TestTemplateFields(unittest.TestCase):
 
     def test_field_init(self):
         # inadvertently tests "prev", as well
-        t = fields.Template("tests/templates/init.yaml")
+        t = template.Template("tests/templates/init.yaml")
         r = t.gen_record()
 
         self.assertEqual(r.foo, 1)
@@ -204,26 +214,84 @@ class TestTemplateFields(unittest.TestCase):
         self.assertEqual(r.foo, 2)
 
     def test_field_finalize(self):
-        t = fields.Template("tests/templates/finalize.yaml")
+        t = template.Template("tests/templates/finalize.yaml")
         r = t.gen_record()
 
         self.assertEqual(r.foo, 100)
 
     def test_field_finalize_json(self):
-        t = fields.Template("tests/templates/finalize.json")
+        t = template.Template("tests/templates/finalize.json")
         r = t.gen_record()
 
         self.assertEqual(r.foo, 100)
 
     def test_field_include_json(self):
-        t = fields.Template("tests/templates/finalize_wrapper.json")
+        t = template.Template("tests/templates/finalize_wrapper.json")
         r = t.gen_record()
 
         self.assertEqual(r.foo, 100)
 
+    def test_print_csv(self):
+        import json
+        template.CSV = True
+        template.JSON = False
+
+        t = template.Template("tests/templates/print_test.yaml")
+        r = t.gen_record()
+
+        import io
+        f = io.BytesIO()
+        with stdout_redirector(f):
+            t.print_records(1)
+
+        self.assertEqual(f.getvalue(), "foo\r\n100\r\n")
+
+
+    def test_print_json(self):
+        import json
+        template.JSON = True
+        template.CSV = False
+        t = template.Template("tests/templates/print_test.yaml")
+        r = t.gen_record()
+
+        import io
+        f = io.BytesIO()
+        with stdout_redirector(f):
+            t.print_records(1)
+
+        self.assertEqual(f.getvalue(), json.dumps({"foo" : 100}) + "\n")
+
+    def test_custom_printer(self):
+        t = template.Template("tests/templates/printer.yaml")
+        r = t.gen_record()
+
+        self.assertEqual(r.foo, 100)
+
+        import io
+        f = io.StringIO()
+        with stdout_redirector(f):
+            t.print_records(1)
+
+        self.assertEqual(f.getvalue(), "foo: 100\n")
+
+
+    def test_setup(self):
+        t = template.Template("tests/templates/setup.yaml")
+        r = t.gen_record()
+
+        self.assertEqual(r.foo, 100)
+
+    def test_effects_field(self):
+        helpers.GLOBALS.effects_foo = None
+        t = template.Template("tests/templates/effects.yaml")
+        r = t.gen_record()
+
+        self.assertEqual(helpers.GLOBALS.effects_foo, 100)
+
+
     # test field errors
     def test_exit_on_error(self):
-        t = fields.Template("tests/templates/bad_args.yaml")
+        t = template.Template("tests/templates/bad_args.yaml")
         with self.assertRaises(SystemExit) as context:
             r = t.gen_record()
 

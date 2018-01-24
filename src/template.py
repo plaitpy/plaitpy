@@ -12,6 +12,7 @@ import time
 import yaml
 from os import environ as ENV
 
+from . import debug
 from . import fakerb
 from . import toposort
 from .helpers import *
@@ -21,7 +22,6 @@ CSV = False
 CUSTOM_OUT=True
 SKIP = False
 
-DEBUG="DEBUG" in ENV
 DEBUG_FIELD_SETUP = False
 DEBUG_GEN_TIMINGS = "TIMING" in ENV
 PROFILE_EVERY=25 # profile every 25 records
@@ -37,19 +37,30 @@ EXIT_ON_ERROR="DEBUG" in ENV
 STATIC_BRACE_CAPTURE = "\${(.*?)}"
 STATIC_NOBRACE_CAPTURE = "\$(\w+)"
 
-
 LANGUAGE = "en_US"
 
-class DotWrapper(dict):
-    def __getattr__(self, attr):
-        if attr in self:
-            return self[attr]
+CSV_WRITER = None
+def print_record(process, r, csv_writer=None):
+    if CUSTOM_OUT and process.output_func:
+        process.output_func(r)
+    elif CSV and csv_writer:
+        pr = {}
+        for field in process.public_fields():
+            pr[field] = r[field]
+        csv_writer.writerow(pr)
+    elif JSON:
+        pr = {}
+        for field in process.public_fields():
+            if field not in r:
+                continue
 
-        if not attr in self:
-            debug("MISSING ATTR", attr)
+            if r[field] is not None and r[field] is not "":
+                pr[field] = r[field]
 
-    def __setattr__(self, attr, val):
-        self[attr] = val
+        clean_json(pr)
+        print(json.dumps(pr))
+    else:
+        raise Exception("UNDEFINED PRINT")
 
 class RecordWrapper(dict):
     def __init__(self, *args, **kwargs):
@@ -65,6 +76,10 @@ class RecordWrapper(dict):
 
     def set_template(self, template):
         self.__template = template
+        self.__id = id(self.__template)
+
+    def get_id(self):
+        return self.__id
 
     def populate_field(self, field):
         if field in self:
@@ -83,7 +98,7 @@ class RecordWrapper(dict):
             try:
                 self[field] = val()
             except Exception as e:
-                self.error("ERROR POPULATING FIELD", field, "TEMPLATE IS", self.__template.name, "RECORD IS", self)
+                self.__template.error("ERROR POPULATING FIELD", field, "TEMPLATE IS", self.__template.name, "RECORD IS", self)
                 exit_error()
 
         if self.__profile:
@@ -99,15 +114,19 @@ class RecordWrapper(dict):
         if attr in self:
             return self[attr]
 
-
+YAML_CACHE = {}
+REGISTERED = {}
 class Template(object):
-    def __init__(self, template, overrides=None, hidden=None, depth=0):
+    def __init__(self, template, overrides=None, hidden=None, depth=0, quiet=False):
         self.name = template
         setup_globals()
 
         self.field_data = {}
         self.field_errors = {}
         self.field_definitions = {}
+
+        # fields in ignore_errors should have their errors not halt program
+        self.ignore_errors = {}
 
         self.error_types = {}
         self.count_until_profile = -1
@@ -118,6 +137,7 @@ class Template(object):
 
         self.depth = depth
         self.pad = "  " * self.depth
+        self.quiet = quiet
 
         self.templates = {}
         self.timings = {}
@@ -138,6 +158,7 @@ class Template(object):
 
         self.record = RecordWrapper({})
         self.record.set_template(self)
+        self.record_invalid = False
 
         overrides = overrides or {}
         self.overrides = {}
@@ -159,7 +180,7 @@ class Template(object):
                 self.overrides[o] = overrides[o]
 
 
-        self.load_template(template)
+        self.setup_template(template)
         all_keys = {}
         for k in self.field_data:
             all_keys[k] = 1
@@ -169,6 +190,10 @@ class Template(object):
 
 
     def register_paths(self):
+        if self.name in REGISTERED:
+            return
+
+        REGISTERED[self.name] = 1
         # setup any paths on the way to the template (for convenience)
         this_path = os.path.realpath(".")
         that_path = os.path.realpath(self.name)
@@ -178,20 +203,21 @@ class Template(object):
         fullpath = "."
         for token in tokens[:-1]:
             fullpath = os.path.join(fullpath, token)
+            debug.debug("ADDING PATH", fullpath)
             add_path(fullpath)
 
 
 
     def error(self, *args):
-        if DEBUG or not TEST_MODE:
+        if debug.DEBUG or not TEST_MODE:
             print("%s" % (" ".join(map(str, args))), file=sys.stderr)
 
     def debug(self, *args):
-        if DEBUG:
-            print("%s%s" % (self.pad, " ".join(map(str, args))), file=sys.stderr)
+        if self.quiet:
+            return
 
-    def set_language(self, ln):
-        self.language = ln
+        if debug.DEBUG:
+            print("%s%s" % (self.pad, " ".join(map(str, args))), file=sys.stderr)
 
     def build_template(self, name, data):
         if type(data) == dict:
@@ -218,12 +244,16 @@ class Template(object):
                     if key in d:
                         hidden = d[key]
 
-            return Template("%s" % name, overrides=overrides, hidden=hidden, depth=self.depth+1)
+            return Template("%s" % name, overrides=overrides, hidden=hidden, depth=self.depth+1, quiet=self.quiet)
 
         else:
-            return Template("%s" % name, depth=self.depth+1)
+            return Template("%s" % name, depth=self.depth+1, quiet=self.quiet)
 
-    def load_template(self, template):
+    def setup_template(self, template):
+
+        if template in YAML_CACHE:
+            return self.setup_template_from_cache(template)
+
         if template.endswith(".json"):
             with readfile(template) as f:
                 try:
@@ -237,15 +267,24 @@ class Template(object):
                 data = f.read()
         else:
             self.error("Unknown template type: %s" % template)
+            exit_error()
 
 
-        self.load_template_from_data(template, data)
+        return self.setup_template_from_data(template, data)
 
-    def load_template_from_data(self, template, data):
+    def setup_template_from_cache(self, template):
+        doc = YAML_CACHE[template]
+        return self.setup_template_from_yaml_doc(template, doc)
+
+
+    def setup_template_from_data(self, template, data):
         doc = yaml.load(data)
 
-        self.include = {}
+        YAML_CACHE[template] = doc
+        return self.setup_template_from_yaml_doc(template, doc)
 
+    def setup_template_from_yaml_doc(self, template, doc):
+        self.include = {}
 
         for choice in [ "include", "includes" ]:
             if choice in doc:
@@ -281,6 +320,36 @@ class Template(object):
             else:
                 self.debug("DEF.  %s - $%s as %s" % (template, o, self.static[o]))
 
+        if "imports" in doc:
+            for m in doc["imports"]:
+                if type(m) == str:
+                    d = {}
+                    d[m] = m
+                    m = d
+
+                try:
+                    for modname in m:
+                        asname = m[modname]
+                        mod = __import__(modname)
+
+                        GLOBALS[asname] = mod
+                        RAND_GLOBALS[asname] = mod
+                        self.debug("IMPORTING", modname, "AS", asname)
+                except ImportError as e:
+                    self.debug("*** COULD NOT IMPORT MODULE %s" % m)
+                    if "requirements" in doc:
+                        self.debug("*** MAKE SURE TO INSTALL ALL REQUIREMENTS:", ", ".join(doc["requirements"]))
+
+                    exit_error()
+
+
+        for choice in [ "setup", "init" ]:
+            if choice in doc:
+                init_data = self.replace_statics(doc[choice])
+                init_lambda = make_func(init_data, "<setup:%s>" % (self.name))
+                init_lambda()
+
+
         for choice in [ "print", "printer", "format", "output" ]:
             if choice in doc:
                 print_lambda = make_func(doc[choice], "<printer:%s>" % (self.name))
@@ -289,25 +358,11 @@ class Template(object):
                     print_lambda()
                     pop_this_record()
                 self.output_func = print_func
-                debug("ADDED CUSTOM PRINTER TO", self.name)
+                debug.debug("ADDED CUSTOM PRINTER TO", self.name)
 
         for g in [ "mixin", "mixins"]:
             if g in doc:
                 self.setup_mixins(template, doc[g])
-
-        if "imports" in doc:
-            for m in doc["imports"]:
-                try:
-                    mod = __import__(m)
-                except ImportError as e:
-                    self.debug("*** COULD NOT IMPORT MODULE %s" % m)
-                    if "requirements" in doc:
-                        self.debug("*** MAKE SURE TO INSTALL ALL REQUIREMENTS:", ", ".join(doc["requirements"]))
-
-                    exit_error()
-
-                GLOBALS[m] = mod
-                RAND_GLOBALS[m] = mod
 
 
         if "embed" in doc:
@@ -587,7 +642,7 @@ class Template(object):
             total_weight += weight
             cases.append([weight, case_id, val_func])
 
-        debug("CASES ARE", cases)
+        debug.debug("CASES ARE", cases)
         cases.sort(reverse=True)
         for c in cases:
             c[0] = c[0]/total_weight
@@ -646,6 +701,9 @@ class Template(object):
 
         return pick_case
 
+
+    def setup_effect_field(self, field, **kwargs):
+        return make_func(str(kwargs.get('effect')), '<effect_field: %s>' % field)
 
     def setup_lambda_field(self, field, **kwargs):
         return make_lambda(str(kwargs.get('lambda')), '<lambda_field: %s>' % field)
@@ -757,6 +815,9 @@ class Template(object):
                 if type(deps) == str:
                     deps = [ deps ]
 
+            if "suppress" in field_data:
+                self.ignore_errors[field] = True
+
             val_func = None
             ## the heart of it all
             if "value" in field_data:
@@ -771,6 +832,8 @@ class Template(object):
                 val_func = self.setup_template_field(field, **field_data)
             elif "switch" in field_data:
                 val_func = self.setup_switch_field(field, **field_data)
+            elif "effect" in field_data:
+                val_func = self.setup_effect_field(field, **field_data)
             elif "onlyif" in field_data:
                 val_func = self.setup_fixed_field(field, value="true")
             elif "mixture" in field_data:
@@ -857,7 +920,6 @@ class Template(object):
                     static_lambda = make_lambda(static_init, '<static_field::%s>' % field)
                     self.static[field] = static_lambda()
 
-
     def replace_statics(self, field_data):
         def replace_field(m):
             return str(self.static[m.group(1)])
@@ -920,7 +982,7 @@ class Template(object):
             else:
                 error_types[err_str] += 1
 
-        if EXIT_ON_ERROR:
+        if field not in self.ignore_errors or EXIT_ON_ERROR:
             exit_error()
 
 
@@ -1020,43 +1082,25 @@ class Template(object):
 
         return ret
 
-    def print_records(self, num_records):
-        csv_writer = None
+    def print_headers(self):
+        self.csv_writer = None
         if CSV:
-            csv_writer = csv.DictWriter(sys.stdout, fieldnames=self.headers)
-            csv_writer.writeheader()
+            self.csv_writer = csv.DictWriter(sys.stdout, fieldnames=self.headers)
+            self.csv_writer.writeheader()
 
 
+    def print_records(self, num_records):
         chunk_size = 1000
-        def print_record(r):
-            if CUSTOM_OUT and self.output_func:
-                self.output_func(r)
-            elif JSON:
-                pr = {}
-                for field in self.public_fields():
-                    if field not in r:
-                        continue
-
-                    if r[field] is not None and r[field] is not "":
-                        pr[field] = r[field]
-
-                clean_json(pr)
-                print(json.dumps(pr))
-
-            elif CSV:
-                pr = {}
-                for field in self.public_fields():
-                    pr[field] = r[field]
-                csv_writer.writerow(pr)
+        self.print_headers()
 
 
         for _ in range(num_records // chunk_size):
             for r in self.gen_records(chunk_size, print_timing=False):
-                print_record(r)
+                print_record(self, r, csv_writer=self.csv_writer)
 
         if num_records % chunk_size != 0:
             for r in self.gen_records(num_records % chunk_size, print_timing=False):
-                print_record(r)
+                print_record(self, r, csv_writer=self.csv_writer)
 
         self.print_dropped()
         if DEBUG_GEN_TIMINGS:
@@ -1078,7 +1122,7 @@ class Template(object):
                 ret.append(r)
 
         except Exception as e:
-            debug(e)
+            debug.debug(e)
         finally:
             if print_timing:
                 self.print_dropped()

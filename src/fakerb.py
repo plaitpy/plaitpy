@@ -5,7 +5,8 @@ import random
 import re
 import hashlib
 
-from .helpers import debug, verbose, exit_error, readfile, LAMBDA_TYPE
+from .debug import debug, verbose
+from .helpers import LAMBDA_TYPE, readfile, exit_error
 
 # a key looks like: base.field
 # base maps to faker/lib/locales/en/base.yaml

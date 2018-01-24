@@ -146,10 +146,13 @@ plait.py also simplifies looking up faker fields:
 
 * see docs/TROUBLESHOOTING.md
 
-### future direction
 
-Currently, plait.py models independent markov processes - future investigation
-into modeling processes that can interact with each other is needed.
+### Dependent Markov Processes
+
+To simulate data that comes from many markov processes (a markov ecosystem),
+see the [plaitpy-ipc](https://github.com/plaitpy/plaitpy-ipc) repository.
+
+### future direction
 
 If you have ideas on features to add, open an issue - Feedback is appreciated!
 

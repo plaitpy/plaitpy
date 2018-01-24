@@ -8,22 +8,24 @@ import re
 import math
 import os
 
-from . import tween
+from . import debug
 
 from os import environ as ENV
 
-DEBUG="DEBUG" in ENV
 LAMBDA_TYPE = type(lambda w: w)
-VERBOSE=False
 TRACEBACK=True
 
-def debug(*args):
-    if DEBUG:
-        print(" ".join(map(str, args)), file=sys.stderr)
+class DotWrapper(dict):
+    def __getattr__(self, attr):
+        if attr in self:
+            return self[attr]
 
-def verbose(*args):
-    if VERBOSE:
-        print(" ".join(map(str, args)), file=sys.stderr)
+        if not attr in self:
+            debug.debug("MISSING ATTR", attr)
+
+    def __setattr__(self, attr, val):
+        self[attr] = val
+
 
 def exit():
     sys.exit(1)
@@ -31,17 +33,31 @@ def exit():
 def exit_error(e=None):
     import traceback
     if e:
-        debug("Error:", e)
+        debug.debug("Error:", e)
 
     if TRACEBACK:
         traceback.print_exc()
     sys.exit(1)
 
+# from comment on http://code.activestate.com/recipes/578231-probably-the-fastest-memoization-decorator-in-the-/
+def memoize(f):
+    """ Memoization decorator for functions taking one or more arguments. """
+    class memodict(dict):
+        def __init__(self, f):
+            self.f = f
+        def __call__(self, *args):
+            return self[args]
+        def __missing__(self, key):
+            ret = self[key] = self.f(*key)
+            return ret
+    return memodict(f)
 
+@memoize
 def make_func(expr, name):
     func = compile_lambda(str(expr), name, 'exec')
     return lambda: eval(func, GLOBALS, LOCALS)
 
+@memoize
 def make_lambda(expr, name):
     func = compile_lambda(str(expr), name)
     return lambda: eval(func, GLOBALS, LOCALS)
@@ -60,27 +76,47 @@ class ObjWrapper(dict):
         self[attr] = val
 
 
-
 GLOBALS = ObjWrapper({})
 RAND_GLOBALS = ObjWrapper({})
 LOCALS = ObjWrapper()
 
+class GlobalAssigner(dict):
+    def __str__(self):
+        return "GLOBAL ASSIGNER %s" % (id(self))
+
+    def __setitem__(self, attr, val):
+        GLOBALS[attr] = val
+        RAND_GLOBALS[attr] = val
+
+    def __setattr__(self, attr, val):
+        GLOBALS[attr] = val
+        RAND_GLOBALS[attr] = val
+
+    def __getitem__(self, attr):
+        if attr in RAND_GLOBALS:
+            return RAND_GLOBALS[attr]
+
+    def __getattr__(self, attr):
+        if attr in RAND_GLOBALS:
+            return RAND_GLOBALS[attr]
 
 def setup_globals():
     if "__plaitpy__" in GLOBALS:
         return
 
-    g = globals()
+    ga = GlobalAssigner()
+    ga["__plaitpy__"] = True
+    ga.time = time
+    ga.random = random
+    ga.re = re
+    ga.GLOBALS = ga
+    ga.globals = ga
 
-    GLOBALS.time = time
-    GLOBALS.random = random
-    GLOBALS.tween = tween
-    GLOBALS.re = re
-    GLOBALS["__plaitpy__"] = True
+    from . import tween
+    ga.tween = tween
 
     for field in dir(math):
-        GLOBALS[field] = getattr(math, field)
-        RAND_GLOBALS[field] = getattr(math, field)
+        ga[field] = getattr(math, field)
 
     for field in dir(random):
         RAND_GLOBALS[field] = getattr(random, field)

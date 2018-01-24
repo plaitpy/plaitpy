@@ -1,0 +1,3 @@
+fields:
+  foo:
+    effect: globals.effects_foo = 100

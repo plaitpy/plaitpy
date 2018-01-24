@@ -8,9 +8,9 @@ import sys
 import os
 
 from . import fakerb
-from . import fields
+from . import template
 from . import helpers
-from .helpers import debug
+from . import debug
 
 def setup_args():
     parser = argparse.ArgumentParser(description='Generate fake datasets from yaml template files')
@@ -33,7 +33,7 @@ def setup_args():
     parser.add_argument('--debug', dest='debug', action="store_true", default=False,
                         help='Turn on debugging output for plait.py')
     parser.add_argument('--exit-on-error', dest='exit_error', action="store_true", default=False,
-                        help='Exit loudly on error')
+                        help='Exit loudly on any error')
 
     args = parser.parse_args()
 
@@ -44,20 +44,19 @@ def main():
     args, parser = setup_args()
 
     if args.csv:
-        fields.CSV = True
-        fields.JSON = False
+        template.CSV = True
+        template.JSON = False
 
     elif args.json:
-        fields.JSON = True
-        fields.CSV = False
+        template.JSON = True
+        template.CSV = False
 
     if args.exit_error:
         args.debug = True
-        fields.EXIT_ON_ERROR = True
+        template.EXIT_ON_ERROR = True
 
     if args.debug:
-        fields.DEBUG = True
-        helpers.DEBUG = True
+        debug.DEBUG = True
 
 
 
@@ -105,7 +104,7 @@ def main():
     helpers.add_template_path(args.dir)
     helpers.setup_globals()
 
-    tmpl = fields.Template(template_file)
-    debug("*** GENERATING %s RECORDS" % args.num_records)
+    tmpl = template.Template(template_file)
+    debug.debug("*** GENERATING %s RECORDS" % args.num_records)
     tmpl.print_records(args.num_records)
     fakerb.save_cache()
