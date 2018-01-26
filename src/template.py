@@ -22,6 +22,11 @@ CSV = False
 CUSTOM_OUT=True
 SKIP = False
 
+try:
+    range = xrange
+except:
+    pass
+
 DEBUG_FIELD_SETUP = False
 DEBUG_GEN_TIMINGS = "TIMING" in ENV
 PROFILE_EVERY=25 # profile every 25 records
@@ -1090,16 +1095,11 @@ class Template(object):
 
 
     def print_records(self, num_records):
-        chunk_size = 1000
         self.print_headers()
 
 
-        for _ in range(num_records // chunk_size):
-            for r in self.gen_records(chunk_size, print_timing=False):
-                print_record(self, r, csv_writer=self.csv_writer)
-
-        if num_records % chunk_size != 0:
-            for r in self.gen_records(num_records % chunk_size, print_timing=False):
+        for _ in range(num_records):
+            for r in self.gen_records(1, print_timing=False):
                 print_record(self, r, csv_writer=self.csv_writer)
 
         self.print_dropped()
