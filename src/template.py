@@ -122,7 +122,7 @@ class RecordWrapper(dict):
 YAML_CACHE = {}
 REGISTERED = {}
 class Template(object):
-    def __init__(self, template, overrides=None, hidden=None, depth=0, quiet=False):
+    def __init__(self, template, overrides=None, hidden=None, depth=0, quiet=False, use_cache=True):
         self.name = template
         setup_globals()
 
@@ -137,7 +137,6 @@ class Template(object):
         self.count_until_profile = -1
         if DEBUG_GEN_TIMINGS:
             self.count_until_profile = 0
-
 
 
         self.depth = depth
@@ -174,6 +173,8 @@ class Template(object):
         self.register_paths()
 
         self.output_func = None
+
+        self.use_cache = use_cache
 
         self.debug("*** LOADING TEMPLATE", template)
         for o in overrides:
@@ -256,8 +257,8 @@ class Template(object):
 
     def setup_template(self, template):
 
-        if template in YAML_CACHE:
-            return self.setup_template_from_cache(template)
+        if template in YAML_CACHE and self.use_cache:
+                return self.setup_template_from_cache(template)
 
         if template.endswith(".json"):
             with readfile(template) as f:
